@@ -1,22 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
+import pet, { ANIMALS } from "@frontendmasters/pet";
+import Results from "./Results";
+import useDropdown from "./useDropdown";
+
+// useEffect will replace the lifecycle methods
 
 const SearchParams = () => {
   const [location, setLocation] = useState("Seattle, WA");
+  // creating the hook, (always get back an array, thats why we are distructuring the array) get back an array
+  // of 2 thing 1st current state of it, update function of that statement
+  // hook never go inside a forloop or if statement
+  const [breeds, setBreeds] = useState([]);
+  const [animal, AnimalDropdown] = useDropdown("Animal", "dog", ANIMALS);
+  const [breed, BreedDropdown, setBreed] = useDropdown("Breed", "", breeds);
+  // useDropdown is using the second parameter as the initial state
+  const [pets, setPets] = useState([]);
+
+  async function requestPets() {
+    const { animals } = await pet.animals({
+      location,
+      breed,
+      type: animal,
+    });
+
+    setPets(animals || []);
+  }
+
+  useEffect(() => {
+    setBreeds([]);
+    setBreed("");
+
+    pet.breeds(animal).then(({ breeds: apiBreeds }) => {
+      const breedStrings = apiBreeds.map(({ name }) => name);
+      setBreeds(breedStrings);
+    }, console.error);
+  }, [animal, setBreeds, setBreeds]);
 
   return (
     <div className="search-params">
-      <form>
+      <h1>{location}</h1>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          requestPets();
+        }}
+      >
         <label htmlFor="location">
           location
-          <input 
-          id="location" 
-          value={location} 
-          placeholder="location" 
-          onChange={e => setLocation(e.target.value)}
+          <input
+            id="location"
+            value={location}
+            placeholder="location"
+            onChange={(e) => setLocation(e.target.value)}
           />
         </label>
+        <AnimalDropdown />
+        <BreedDropdown />
         <button>Submit</button>
       </form>
+      <Results pets={pets} />
     </div>
   );
 };
