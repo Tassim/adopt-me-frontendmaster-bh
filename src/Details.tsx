@@ -1,6 +1,6 @@
 import React, { lazy } from "react";
-import pet from "@frontendmasters/pet";
-import { navigate } from "@reach/router";
+import pet, { Photo } from "@frontendmasters/pet";
+import { navigate, RouteComponentProps } from "@reach/router";
 import Carousel from "./Carousel";
 import ErrorBoundary from "./ErrorBoundary";
 import ThemeContext from "./ThemeContext";
@@ -11,8 +11,18 @@ const Modal = lazy(() => import("./Modal"));
 
 console.log(_, moment);
 
-class Details extends React.Component {
-  state = { loading: true, showModal: false };
+class Details extends React.Component<RouteComponentProps<{ id: string }>> {
+  public state = {
+    loading: true,
+    showModal: false,
+    name: "",
+    animal: "",
+    location: "",
+    description: "",
+    media: [] as Photo[],
+    url: "",
+    breed: "",
+  };
 
   // constructor(props) {
   //   super(props);
@@ -21,9 +31,13 @@ class Details extends React.Component {
   //     loading: true,
   //   };
   // }
-  componentDidMount() {
+  public componentDidMount() {
+    if (!this.props.id) {
+      navigate("/");
+      return;
+    }
     pet
-      .animal(this.props.id)
+      .animal(+this.props.id)
       .then(({ animal }) => {
         this.setState({
           url: animal.url,
@@ -35,10 +49,12 @@ class Details extends React.Component {
           breed: animal.breeds.primary,
           loading: false,
         });
-      }, console.error);
+      })
+      .catch((err: Error) => this.setState({ error: err }));
   }
 
-  toggleModal = () => this.setState({ showModal: !this.state.showModal });
+  public toggleModal = () =>
+    this.setState({ showModal: !this.state.showModal });
   adopt = () => navigate(this.state.url);
   render() {
     if (this.state.loading) {
@@ -100,7 +116,9 @@ class Details extends React.Component {
 //   );
 // }
 
-export default function DetailsWithErrorBoundary(props) {
+export default function DetailsWithErrorBoundary(
+  props: RouteComponentProps<{ id: string }
+>) {
   return (
     <ErrorBoundary>
       <Details {...props} />
